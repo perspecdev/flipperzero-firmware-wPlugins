@@ -87,7 +87,7 @@ void subghz_scene_receiver_on_enter(void* context) {
 
     if(subghz->txrx->rx_key_state == SubGhzRxKeyStateIDLE) {
         subghz->txrx->frequency = subghz_setting_get_default_frequency(subghz->setting);
-        subghz->txrx->preset = FuriHalSubGhzPresetOok270Async;
+        subghz->txrx->preset = FuriHalSubGhzPresetOok650Async;
         subghz->txrx->hopper_state = SubGhzHopperStateRunnig;
         subghz_history_reset(subghz->txrx->history);
         subghz->txrx->rx_key_state = SubGhzRxKeyStateStart;
