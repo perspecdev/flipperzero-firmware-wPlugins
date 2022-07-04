@@ -2,6 +2,13 @@
 
 #include <lib/subghz/protocols/raw.h>
 
+enum SubGhzSettingIndex {
+    SubGhzSettingIndexFrequency,
+    SubGhzSettingIndexHopping,
+    SubGhzSettingIndexModulation,
+    SubGhzSettingIndexLock,
+};
+
 #define PRESET_COUNT 4
 const char* const preset_text[PRESET_COUNT] = {
     "AM270",
@@ -175,6 +182,15 @@ static void subghz_scene_receiver_config_set_hopping_runing(VariableItem* item) 
     subghz->txrx->hopper_state = hopping_value[index];
 }
 
+static void subghz_scene_receiver_config_var_list_enter_callback(void* context, uint32_t index) {
+    furi_assert(context);
+    SubGhz* subghz = context;
+    if(index == SubGhzSettingIndexLock) {
+        view_dispatcher_send_custom_event(
+            subghz->view_dispatcher, SubGhzCustomEventSceneSettingLock);
+    }
+}
+
 void subghz_scene_receiver_config_on_enter(void* context) {
     SubGhz* subghz = context;
     VariableItem* item;
@@ -237,13 +253,29 @@ void subghz_scene_receiver_config_on_enter(void* context) {
         variable_item_set_current_value_text(item, detect_raw_text[value_index]);
     }
 
+    if(scene_manager_get_scene_state(subghz->scene_manager, SubGhzSceneReadRAW) !=
+       SubGhzCustomEventManagerSet) {
+        variable_item_list_add(subghz->variable_item_list, "Lock Keyboard", 1, NULL, NULL);
+        variable_item_list_set_enter_callback(
+            subghz->variable_item_list,
+            subghz_scene_receiver_config_var_list_enter_callback,
+            subghz);
+    }
     view_dispatcher_switch_to_view(subghz->view_dispatcher, SubGhzViewIdVariableItemList);
 }
 
 bool subghz_scene_receiver_config_on_event(void* context, SceneManagerEvent event) {
-    UNUSED(context);
-    UNUSED(event);
-    return false;
+    SubGhz* subghz = context;
+    bool consumed = false;
+
+    if(event.type == SceneManagerEventTypeCustom) {
+        if(event.event == SubGhzCustomEventSceneSettingLock) {
+            subghz->lock = SubGhzLockOn;
+            scene_manager_previous_scene(subghz->scene_manager);
+            consumed = true;
+        }
+    }
+    return consumed;
 }
 
 void subghz_scene_receiver_config_on_exit(void* context) {
