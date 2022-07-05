@@ -1,5 +1,6 @@
 #include "../subghz_i.h"
 #include "../views/receiver.h"
+#include <lib/subghz/protocols/raw.h>
 
 static const NotificationSequence subghs_sequence_rx = {
     &message_green_255,
@@ -105,8 +106,16 @@ void subghz_scene_receiver_on_enter(void* context) {
     if(subghz->txrx->rx_key_state == SubGhzRxKeyStateIDLE) {
         subghz->txrx->frequency = subghz_setting_get_default_frequency(subghz->setting);
         subghz->txrx->preset = FuriHalSubGhzPresetOok650Async;
+        subghz->txrx->hopper_state = SubGhzHopperStateRunnig;
         subghz_history_reset(subghz->txrx->history);
         subghz->txrx->rx_key_state = SubGhzRxKeyStateStart;
+
+        subghz_receiver_set_filter(subghz->txrx->receiver, SubGhzProtocolFlag_Decodable | SubGhzProtocolFlag_RAW);
+
+        subghz_protocol_decoder_raw_set_auto_mode(
+            subghz_receiver_search_decoder_base_by_name(subghz->txrx->receiver, SUBGHZ_PROTOCOL_RAW_NAME),
+            true
+        );
     }
 
     subghz_view_receiver_set_lock(subghz->subghz_receiver, subghz->lock);
