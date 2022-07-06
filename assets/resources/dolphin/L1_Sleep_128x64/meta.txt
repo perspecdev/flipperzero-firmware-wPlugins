@@ -25,7 +25,7 @@ EndFrame: 9
 Slot: 1
 X: 53
 Y: 20
-Text: OH MY GOD!
+Text: WHAT!
 AlignH: Left
 AlignV: Bottom
 StartFrame: 3

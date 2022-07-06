@@ -55,6 +55,8 @@ public:
         DeleteConfirm,
         DeleteSuccess,
         Rpc,
+        EmuMenu,
+        EmuData,
     };
 
     class Event {

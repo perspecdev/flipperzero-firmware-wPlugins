@@ -277,6 +277,22 @@ bool subghz_protocol_decoder_raw_write_data(void* context, bool level, uint32_t 
     return wrote_data;
 }
 
+void subghz_protocol_decoder_raw_write_data(void* context, bool level, uint32_t duration) {
+    furi_assert(context);
+    SubGhzProtocolDecoderRAW* instance = context;
+
+    if(instance->last_level != level) {
+        instance->last_level = (level ? true : false);
+        instance->upload_raw[instance->ind_write++] = (level ? duration : -duration);
+        subghz_protocol_blocks_add_bit(&instance->decoder, (level) ? 1 : 0);
+    }
+
+    if(instance->ind_write == SUBGHZ_DOWNLOAD_MAX_SIZE) {
+        if(instance->base.callback)
+            instance->base.callback(&instance->base, instance->base.context);
+    }
+}
+
 void subghz_protocol_decoder_raw_feed(void* context, bool level, uint32_t duration) {
     furi_assert(context);
     SubGhzProtocolDecoderRAW* instance = context;
