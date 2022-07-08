@@ -2,19 +2,18 @@
 // Created by dwdraugr on 24.11.2021.
 //
 
-#include "flipper-chip.h"
-#include "flipper-fonts.h"
+#include "flipper_chip.h"
+#include "flipper_fonts.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
 
 static uint8_t randbyte();
-static void draw_sprite(t_chip8_state *state, uint8_t x, uint8_t y, uint8_t n);
-static void error_stop(t_chip8_state *state, uint16_t opcode);
+static void draw_sprite(t_chip8_state* state, uint8_t x, uint8_t y, uint8_t n);
+static void error_stop(t_chip8_state* state, uint16_t opcode);
 
-t_chip8_state* t_chip8_init(void* (*system_malloc)(size_t))
-{
+t_chip8_state* t_chip8_init(void* (*system_malloc)(size_t)) {
     t_chip8_state* state = system_malloc(sizeof(t_chip8_state));
 
     state->PC = MEMORY_START_POSITION;
@@ -28,8 +27,7 @@ t_chip8_state* t_chip8_init(void* (*system_malloc)(size_t))
     state->memory = system_malloc(MEMORY_SIZE * sizeof(uint8_t));
     //	memset(state->memory, 0, MEMORY_SIZE);
     state->screen = system_malloc(SCREEN_HEIGHT * sizeof(size_t));
-    for(int i = 0; i < SCREEN_HEIGHT; i++)
-    {
+    for(int i = 0; i < SCREEN_HEIGHT; i++) {
         state->screen[i] = system_malloc(SCREEN_WIDTH * sizeof(uint8_t));
         //		memset(state->screen[i], 0, SCREEN_WIDTH);
     }
@@ -46,21 +44,17 @@ t_chip8_state* t_chip8_init(void* (*system_malloc)(size_t))
     return state;
 }
 
-bool t_chip8_load_game(t_chip8_state *state, const uint8_t *rom, int rom_size)
-{
-    if (MEMORY_ROM_SIZE < rom_size)
-    {
+bool t_chip8_load_game(t_chip8_state* state, const uint8_t* rom, int rom_size) {
+    if(MEMORY_ROM_SIZE < rom_size) {
         return false;
     }
     memcpy(&state->memory[MEMORY_START_POSITION], rom, rom_size);
     return true;
 }
 
-void t_chip8_free_memory(t_chip8_state* state, void (*system_free)(void*))
-{
+void t_chip8_free_memory(t_chip8_state* state, void (*system_free)(void*)) {
     system_free(state->memory);
-    for(int i = 0; i < SCREEN_HEIGHT; i++)
-    {
+    for(int i = 0; i < SCREEN_HEIGHT; i++) {
         system_free(state->screen[i]);
     }
     system_free(state->screen);
@@ -70,8 +64,7 @@ void t_chip8_free_memory(t_chip8_state* state, void (*system_free)(void*))
     system_free(state);
 }
 
-void t_chip8_execute_next_opcode(t_chip8_state *state)
-{
+void t_chip8_execute_next_opcode(t_chip8_state* state) {
     static bool isWaitInput = false;
     static uint8_t register_number = 255;
 
@@ -83,23 +76,18 @@ void t_chip8_execute_next_opcode(t_chip8_state *state)
     uint16_t nnn = opcode & 0x0FFF;
 
     // jump to input-wait opcode
-    if (isWaitInput)
-    {
+    if(isWaitInput) {
         opcode = 0xF000;
         kk = 0x0A;
         x = register_number;
     }
     state->current_opcode = opcode & 0xF000;
-    switch (opcode & 0xF000)
-    {
+    switch(opcode & 0xF000) {
     case 0x0000:
-        switch (kk)
-        {
+        switch(kk) {
         case 0x00E0:
-            for (int i = 0; i < SCREEN_HEIGHT; i++)
-            {
-                for(int j = 0; j < SCREEN_WIDTH; j++)
-                {
+            for(int i = 0; i < SCREEN_HEIGHT; i++) {
+                for(int j = 0; j < SCREEN_WIDTH; j++) {
                     state->screen[i][j] = 0;
                 }
             }
@@ -137,8 +125,7 @@ void t_chip8_execute_next_opcode(t_chip8_state *state)
         state->PC += 2;
         break;
     case 0x8000:
-        switch (n)
-        {
+        switch(n) {
         case 0x0:
             state->V[x] = state->V[y];
             break;
@@ -177,8 +164,7 @@ void t_chip8_execute_next_opcode(t_chip8_state *state)
         state->PC += 2;
         break;
     case 0x9000:
-        switch (n)
-        {
+        switch(n) {
         case 0x0:
             state->PC += state->V[x] != state->V[y] ? 4 : 2;
             break;
@@ -203,8 +189,7 @@ void t_chip8_execute_next_opcode(t_chip8_state *state)
         state->PC += 2;
         break;
     case 0xE000:
-        switch (kk)
-        {
+        switch(kk) {
         case 0x9E:
             state->PC += state->key[state->V[x]] ? 4 : 2;
             break;
@@ -216,17 +201,14 @@ void t_chip8_execute_next_opcode(t_chip8_state *state)
         }
         break;
     case 0xF000:
-        switch (kk)
-        {
+        switch(kk) {
         case 0x07:
             state->V[x] = state->delay_timer;
             state->PC += 2;
             break;
         case 0x0A:
-            for (int i = 0; i < KEYS_NUMBER; i++)
-            {
-                if (state->key[i])
-                {
+            for(int i = 0; i < KEYS_NUMBER; i++) {
+                if(state->key[i]) {
                     state->V[x] = i;
                     isWaitInput = false;
                     goto exit_input_wait;
@@ -266,7 +248,9 @@ void t_chip8_execute_next_opcode(t_chip8_state *state)
             state->PC += 2;
             break;
         case 0x65:
-            for (int i = 0; i <= x; i++) { state->V[i] = state->memory[state->I + i]; }
+            for(int i = 0; i <= x; i++) {
+                state->V[i] = state->memory[state->I + i];
+            }
             state->I += x + 1;
             state->PC += 2;
             break;
@@ -277,73 +261,59 @@ void t_chip8_execute_next_opcode(t_chip8_state *state)
     default:
         error_stop(state, opcode);
     }
-    
+
     state->next_opcode = state->memory[state->PC] << 8 | state->memory[state->PC + 1];
     state->next_opcode &= 0xf000;
 }
 
-void t_chip8_tick(t_chip8_state* state)
-{
-    if (state->delay_timer > 0)
-    {
+void t_chip8_tick(t_chip8_state* state) {
+    if(state->delay_timer > 0) {
         --state->delay_timer;
     }
-    if (state->sound_timer > 0)
-    {
+    if(state->sound_timer > 0) {
         --state->sound_timer;
     }
 }
 
-uint8_t** t_chip8_get_screen(t_chip8_state* state)
-{
-    return (uint8_t **) state->screen;
+uint8_t** t_chip8_get_screen(t_chip8_state* state) {
+    return (uint8_t**)state->screen;
 }
 
-void t_chip8_set_input(t_chip8_state* state, t_keys key)
-{
+void t_chip8_set_input(t_chip8_state* state, t_keys key) {
     state->key[key] = 1;
 }
 
-void t_chip8_release_input(t_chip8_state* state)
-{
-    for (int i = 0; i < KEYS_NUMBER; i++)
-    {
+void t_chip8_release_input(t_chip8_state* state) {
+    for(int i = 0; i < KEYS_NUMBER; i++) {
         state->key[i] = 0;
     }
 }
 
-static uint8_t randbyte()
-{
+static uint8_t randbyte() {
     return rand() % 256;
 }
 
-static void draw_sprite(t_chip8_state *state, uint8_t x, uint8_t y, uint8_t n)
-{
+static void draw_sprite(t_chip8_state* state, uint8_t x, uint8_t y, uint8_t n) {
     unsigned row = y, col = x;
     unsigned byte_index;
     unsigned bit_index;
 
-
     state->V[0xF] = 0;
-    for (byte_index = 0; byte_index < n; byte_index++)
-    {
+    for(byte_index = 0; byte_index < n; byte_index++) {
         uint8_t byte = state->memory[state->I + byte_index];
 
-        for (bit_index = 0; bit_index < 8; bit_index++)
-        {
-
+        for(bit_index = 0; bit_index < 8; bit_index++) {
             uint8_t bit = (byte >> bit_index) & 0x1;
 
-            uint8_t *pixel_pointer = &state->screen[(row + byte_index) % SCREEN_HEIGHT]
+            uint8_t* pixel_pointer = &state->screen[(row + byte_index) % SCREEN_HEIGHT]
                                                    [(col + (7 - bit_index)) % SCREEN_WIDTH];
 
-            if (bit == 1 && *pixel_pointer ==1) state->V[0xF] = 1;
+            if(bit == 1 && *pixel_pointer == 1) state->V[0xF] = 1;
             *pixel_pointer = *pixel_pointer ^ bit;
         }
     }
 }
 
-static void error_stop(t_chip8_state* state, uint16_t opcode)
-{
+static void error_stop(t_chip8_state* state, uint16_t opcode) {
     exit(100);
 }
